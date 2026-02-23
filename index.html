@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Diagram Search App</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
@@ -398,7 +399,8 @@
                         </div>
                     </div>
 
-                    <div id="diagramDmTypeSelector" class="diagram-dm-selector" style="display: none; margin-bottom: 15px;">
+                    <div id="diagramDmTypeSelector" class="diagram-dm-selector"
+                        style="display: none; margin-bottom: 15px;">
                         <label>เลือกโมเดล (กรณีมีหลายโมเดล)</label>
                         <select id="diagramDmType" class="diagram-select" onchange="changeDiagramType()"></select>
                     </div>
@@ -418,12 +420,14 @@
                 </div>
 
                 <div class="diagram-search-btn">
-                    <button class="diagram-btn diagram-btn-primary" onclick="diagramSearch()" style="margin-bottom: 15px;">
+                    <button class="diagram-btn diagram-btn-primary" onclick="diagramSearch()"
+                        style="margin-bottom: 15px;">
                         <span style="margin-right: 8px;">🔍</span>
                         <span>ค้นหาข้อมูล</span>
                     </button>
 
-                    <div class="diagram-download-buttons" style="display: flex; justify-content: space-between; gap: 10px;">
+                    <div class="diagram-download-buttons"
+                        style="display: flex; justify-content: space-between; gap: 10px;">
                         <button class="diagram-btn diagram-download-btn" onclick="diagramDownloadDM()">
                             <div>📋</div>
                             <span>ดาวน์โหลดไดอะแกรม</span>
@@ -440,7 +444,7 @@
         <div class="diagram-content-row">
             <div class="diagram-preview-col">
                 <div class="diagram-preview-container">
-                    
+
                     <div id="diagramLayoutSelector" style="
                         display:none;
                         position:absolute;
@@ -467,8 +471,9 @@
                         </span>
                     </div>
 
-                    <div id="diagramImageAfter" class="diagram-image-container" style="width: 100%; display: none; text-align: center;">
-                        </div>
+                    <div id="diagramImageAfter" class="diagram-image-container"
+                        style="width: 100%; display: none; text-align: center;">
+                    </div>
                 </div>
             </div>
 
@@ -726,7 +731,7 @@
                     <td>${sp.spcode || '-'}</td>
                     <td>${sp.spname || '-'}</td>
                     <td style="text-align:center">1 ${sp.spunit || 'ชิ้น'}</td>
-                    <td>${Number(sp.stdprice).toLocaleString('th-TH', {minimumFractionDigits: 2}) || 'N/A'}</td>
+                    <td>${Number(sp.stdprice).toLocaleString('th-TH', { minimumFractionDigits: 2 }) || 'N/A'}</td>
                 `;
 
                 diagramTableBody.appendChild(row);
@@ -794,7 +799,7 @@
 
         // Initialize table content
         document.addEventListener('DOMContentLoaded', () => {
-             diagramTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">กรุณาค้นหาสินค้าเพื่อดูรายการอะไหล่</td></tr>';
+            diagramTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">กรุณาค้นหาสินค้าเพื่อดูรายการอะไหล่</td></tr>';
         });
 
     </script>
