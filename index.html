@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Diagram Search App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
+    <style>
+        :root {
+            /* Theme Colors */
+            --primary-color: #fa4c24;
+            /* สีส้มหลัก */
+            --primary-hover-color: #cf2600;
+            /* สีส้มเข้มเมื่อโฮเวอร์ */
+            --secondary-color: #007bff;
+            /* สีน้ำเงินรอง (ใช้สำหรับลิงก์/ข้อความเสริม) */
+            --background-color: #f8f9fa;
+            /* สีพื้นหลังอ่อน */
+            --card-background: #ffffff;
+            /* สีพื้นหลังของ Card */
+            --border-color: #dee2e6;
+            /* สีขอบอ่อน */
+            --input-border-color: #ced4da;
+            /* สีขอบ Input */
+            --focus-ring-color: rgba(250, 76, 36, 0.25);
+            /* สี Focus Ring */
+            --highlight-bg: #fff0ed;
+            /* สีพื้นหลังสำหรับเน้น */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: #333;
+        }
+
+        .diagram-search-app {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        /* --- Card Styles --- */
+        .diagram-search-container {
+            background-color: var(--card-background);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .diagram-preview-container,
+        .diagram-table-container {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+
+        /* --- Form Styles --- */
+        .diagram-form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #555;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .diagram-input-group {
+            display: flex;
+        }
+
+        .diagram-form-control,
+        .diagram-select {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid var(--input-border-color);
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .diagram-form-control:focus,
+        .diagram-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--focus-ring-color);
+        }
+
+        .diagram-form-control {
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .diagram-input-addon {
+            background-color: var(--card-background);
+            border: 1px solid var(--input-border-color);
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .diagram-input-addon:hover {
+            background-color: #f0f0f0;
+        }
+
+        .diagram-input-addon img {
+            filter: grayscale(100%);
+        }
+
+        /* --- Button Styles --- */
+        .diagram-btn {
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 150px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .diagram-btn-primary {
+            background-color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            color: white;
+        }
+
+        .diagram-btn-primary:hover {
+            background-color: var(--primary-hover-color);
+            border-color: var(--primary-hover-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(250, 76, 36, 0.4);
+        }
+
+        .diagram-download-btn {
+            background-color: var(--card-background);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            text-align: center;
+            flex-direction: column;
+            line-height: 1.2;
+            min-height: 80px;
+            padding: 10px;
+        }
+
+        .diagram-download-btn:hover {
+            background-color: var(--highlight-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .diagram-download-btn div {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        /* --- Layout/Model Selectors --- */
+        #diagramLayoutSelector {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Preview Area --- */
+        .diagram-preview-container {
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: dashed 2px var(--primary-color);
+            background-color: var(--highlight-bg);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        #diagramImageBefore div {
+            font-size: 72px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        #diagramImageAfter img {
+            max-height: 70vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+
+        /* --- Loading Spinner --- */
+        @keyframes diagramSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .diagram-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: diagramSpin 1s linear infinite;
+        }
+
+        /* --- Table Styles --- */
+        .diagram-table-container {
+            max-height: 600px;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-background);
+        }
+
+        .diagram-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .diagram-table thead th {
+            padding: 15px 12px;
+            border-bottom: 2px solid var(--primary-color);
+            text-align: left;
+            font-weight: 700;
+            color: #333;
+            background-color: var(--background-color);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .diagram-table tbody tr {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .diagram-table tbody tr:nth-child(even) {
+            background-color: #f7f7f7;
+        }
+
+        .diagram-table tbody tr:hover {
+            background-color: var(--highlight-bg) !important;
+        }
+
+        .diagram-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            font-size: 15px;
+            vertical-align: middle;
+        }
+
+        .diagram-table td:last-child {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .diagram-table img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            display: block;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        /* --- Modal Styles (Improved) --- */
+        .diagram-modal {
+            transition: opacity 0.3s ease;
+        }
+
+        .diagram-modal-content {
+            border-radius: 12px;
+            max-width: 90%;
+            transition: transform 0.3s ease;
+        }
+
+        .diagram-modal-close {
+            color: #555;
+            top: 15px;
+            right: 25px;
+            line-height: 1;
+        }
+
+        /* --- Responsive Design --- */
+        @media (min-width: 992px) {
+            .diagram-content-row {
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 20px;
+            }
+
+            .diagram-preview-col {
+                flex: 1;
+                min-width: 300px;
+                max-width: 40%;
+            }
+
+            .diagram-table-col {
+                flex: 2;
+                min-width: 400px;
+            }
+
+            .diagram-search-form {
+                display: flex;
+                gap: 20px;
+            }
+
+            .diagram-search-form>div:first-child {
+                flex: 2;
+            }
+
+            .diagram-search-btn {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                min-width: 300px;
+            }
+        }
+
+        @media (max-width: 991px) {
+
+            .diagram-search-form {
+                flex-direction: column;
+            }
+
+            .diagram-search-form>div:first-child {
+                margin-right: 0;
+            }
+
+            .diagram-content-row {
+                flex-direction: column;
+            }
+
+            .diagram-download-buttons {
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                gap: 10px !important;
+            }
+
+            .diagram-download-buttons button {
+                width: calc(50% - 5px);
+                min-width: 100px;
+            }
+
+            .diagram-btn-primary {
+                width: 100%;
+            }
+
+            #diagramLayoutSelector {
+                position: static !important;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="diagram-search-app" class="diagram-search-app">
+        <h1>ค้นหาไดอะแกรมและอะไหล่สินค้า 🛠️</h1>
+        <p>กรอกรหัสสินค้าหรือซีเรียลนัมเบอร์เพื่อดูข้อมูลไดอะแกรมและรายการอะไหล่ที่เกี่ยวข้อง</p>
+
+        <div class="diagram-search-container">
+            <div class="diagram-search-form">
+                <div style="width: 100%;">
+                    <div class="diagram-form-group">
+                        <label>รหัสสินค้า หรือ รหัสโมเดลสินค้า</label>
+                        <div class="diagram-input-group">
+                            <input id="diagramProductOrModel" type="text" class="diagram-form-control"
+                                placeholder="เช่น 50210">
+                            <span class="diagram-input-addon"
+                                onclick="showDiagramImageModal('https://pumpkin-image-sku.s3.ap-southeast-1.amazonaws.com/diagram_check_pid_fg.png')">
+                                <img src="https://uxwing.com/wp-content/themes/uxwing/download/signs-and-symbols/round-information-outline-orange-icon.png"
+                                    alt="วิธีดูรหัสสินค้า" width="25">
+                            </span>
+                        </div>
+                    </div>
+
+                    <div id="diagramDmTypeSelector" class="diagram-dm-selector" style="display: none; margin-bottom: 15px;">
+                        <label>เลือกโมเดล (กรณีมีหลายโมเดล)</label>
+                        <select id="diagramDmType" class="diagram-select" onchange="changeDiagramType()"></select>
+                    </div>
+
+                    <div class="diagram-form-group">
+                        <label>ซีเรียลนัมเบอร์สินค้า (เลข 11-15 หลัก)</label>
+                        <div class="diagram-input-group">
+                            <input placeholder="เลขซีเรียล" id="diagramSerialNumber" type="text"
+                                class="diagram-form-control">
+                            <span class="diagram-input-addon"
+                                onclick="showDiagramImageModal('https://pumpkin-image-sku.s3.ap-southeast-1.amazonaws.com/diagram_check_sn.png')">
+                                <img src="https://uxwing.com/wp-content/themes/uxwing/download/signs-and-symbols/round-information-outline-orange-icon.png"
+                                    alt="วิธีดูซีเรียลนัมเบอร์" width="25">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="diagram-search-btn">
+                    <button class="diagram-btn diagram-btn-primary" onclick="diagramSearch()" style="margin-bottom: 15px;">
+                        <span style="margin-right: 8px;">🔍</span>
+                        <span>ค้นหาข้อมูล</span>
+                    </button>
+
+                    <div class="diagram-download-buttons" style="display: flex; justify-content: space-between; gap: 10px;">
+                        <button class="diagram-btn diagram-download-btn" onclick="diagramDownloadDM()">
+                            <div>📋</div>
+                            <span>ดาวน์โหลดไดอะแกรม</span>
+                        </button>
+                        <button class="diagram-btn diagram-download-btn" onclick="diagramDownloadSP()">
+                            <div>📄</div>
+                            <span>ดาวน์โหลดคู่มือใช้งาน</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="diagram-content-row">
+            <div class="diagram-preview-col">
+                <div class="diagram-preview-container">
+                    
+                    <div id="diagramLayoutSelector" style="
+                        display:none;
+                        position:absolute;
+                        top:15px;
+                        right:15px;
+                        z-index:1000;
+                    ">
+                        <select id="diagramLayoutInput" class="diagram-select" onchange="changeDiagramLayout()"
+                            style="padding:8px 10px; font-size:14px; border-radius:6px;"></select>
+                    </div>
+
+                    <div id="diagramImageLoading" class="diagram-loading-overlay"
+                        style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); justify-content: center; align-items: center; z-index: 999; border-radius: 12px;">
+                        <div class="diagram-spinner"></div>
+                    </div>
+
+                    <div id="diagramImageBefore"
+                        style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        <div>🖼️</div>
+                        <span style="margin-top: 10px; display: block; color: #666; font-size: 18px;">
+                            **รูปภาพไดอะแกรมจะแสดงที่นี่**
+                            <br>
+                            หลังจากการค้นหา
+                        </span>
+                    </div>
+
+                    <div id="diagramImageAfter" class="diagram-image-container" style="width: 100%; display: none; text-align: center;">
+                        </div>
+                </div>
+            </div>
+
+            <div class="diagram-table-col">
+                <div class="diagram-table-container">
+                    <div id="diagramTableLoading" class="diagram-loading-overlay"
+                        style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); justify-content: center; align-items: center; z-index: 999; border-radius: 8px;">
+                        <div class="diagram-spinner"></div>
+                    </div>
+
+                    <table id="diagramPartsTable" class="diagram-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>รูป</th>
+                                <th>รหัสอะไหล่</th>
+                                <th>ชื่ออะไหล่</th>
+                                <th>จำนวน</th>
+                                <th>ราคา (บาท)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="cursor: default;">
+                                <td colspan="6" style="text-align: center; color: #999; padding: 20px;">
+                                    กรุณาค้นหาสินค้าเพื่อดูรายการอะไหล่
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="diagramImageModal" class="diagram-modal"
+        style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.6); justify-content: center; align-items: center;">
+        <div class="diagram-modal-content"
+            style="background-color: var(--card-background); margin: auto; padding: 25px; border: none; width: 90%; max-width: 700px; position: relative; border-radius: 12px; box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);">
+            <span class="diagram-modal-close" onclick="closeDiagramModal()"
+                style="color: #333; position: absolute; top: 10px; right: 20px; font-size: 32px; font-weight: 300; cursor: pointer;">&times;</span>
+            <div class="diagram-modal-body" style="padding-top: 20px;">
+                <img id="diagramModalImage" src="" alt="รูปภาพขยาย"
+                    style="width: 100%; object-fit: contain; max-height: 80vh; border-radius: 8px;">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var diagramDownloadUrl = '';
+        var spDownloadUrl = '';
+        var diagramCurrentData = null;
+        const diagramTableBody = document.querySelector('#diagramPartsTable tbody');
+        const diagramImageLoading = document.getElementById('diagramImageLoading');
+        const diagramTableLoading = document.getElementById('diagramTableLoading');
+        const diagramDmTypeSelector = document.getElementById('diagramDmTypeSelector');
+        const diagramDmTypeSelect = document.getElementById('diagramDmType');
+        const diagramLayoutInput = document.getElementById('diagramLayoutInput');
+        const layoutWrapper = document.getElementById('diagramLayoutSelector');
+
+        var diagramCurrentDM = "01";
+        var diagramCurrentLayout = 1;
+
+
+        function diagramSearch() {
+            let productOrModel = document.getElementById('diagramProductOrModel').value.trim();
+            let serialNumber = document.getElementById('diagramSerialNumber').value.trim();
+
+            if (serialNumber) {
+                document.getElementById('diagramProductOrModel').value = "";
+                productOrModel = "";
+            }
+
+            // Show loading
+            diagramImageLoading.style.display = 'flex';
+            diagramTableLoading.style.display = 'flex';
+
+            // Reset UI
+            diagramTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">กำลังค้นหาข้อมูล...</td></tr>';
+            document.getElementById('diagramImageBefore').style.display = 'none';
+            document.getElementById('diagramImageAfter').style.display = 'none';
+            layoutWrapper.style.display = 'none';
+            diagramDownloadUrl = '';
+            spDownloadUrl = '';
+
+            let searchText = serialNumber ? serialNumber : productOrModel;
+
+            if (!searchText) {
+                alert("กรุณากรอกรหัสสินค้า หรือ ซีเรียล");
+                diagramImageLoading.style.display = 'none';
+                diagramTableLoading.style.display = 'none';
+                document.getElementById('diagramImageBefore').style.display = 'flex';
+                diagramTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">กรุณาค้นหาสินค้าเพื่อดูรายการอะไหล่</td></tr>';
+                return;
+            }
+
+            fetch(`https://warranty-sn.pumpkin.tools/api/getdata?search=${searchText}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log("API DATA", data);
+
+                    if (data.status !== "SUCCESS") {
+                        alert(data.message || "ไม่พบข้อมูลสำหรับรหัสนี้");
+                        diagramImageLoading.style.display = 'none';
+                        diagramTableLoading.style.display = 'none';
+                        document.getElementById('diagramImageBefore').style.display = 'flex';
+                        diagramTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">ไม่พบข้อมูลอะไหล่</td></tr>';
+                        return;
+                    }
+
+                    diagramCurrentData = data;
+
+                    if (serialNumber) {
+                        document.getElementById('diagramProductOrModel').value = '';
+                    }
+
+                    let pid = data.skumain;
+                    let dmList = data.dm_list[pid];
+
+                    // Setup DM Selector
+                    let dmKeys = Object.keys(dmList);
+                    diagramDmTypeSelect.innerHTML = "";
+                    dmKeys.forEach(dm => {
+                        let opt = document.createElement("option");
+                        opt.value = dm;
+                        opt.textContent = data.dm_list[pid][dm].modelfg || `Model ${dm}`;
+                        diagramDmTypeSelect.appendChild(opt);
+                    });
+
+                    diagramDmTypeSelector.style.display = dmKeys.length > 1 ? "block" : "none";
+
+                    // Render default
+                    diagramCurrentDM = dmKeys[0];
+                    renderDiagramNew(pid, diagramCurrentDM);
+
+                })
+                .catch(err => {
+                    console.error("Error fetching data:", err);
+                    alert("เกิดข้อผิดพลาดในการประมวลผลข้อมูล กรุณาลองใหม่อีกครั้ง");
+                    diagramImageLoading.style.display = 'none';
+                    diagramTableLoading.style.display = 'none';
+                    document.getElementById('diagramImageBefore').style.display = 'flex';
+                    diagramTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+                })
+                .finally(() => {
+                    diagramImageLoading.style.display = 'none';
+                    diagramTableLoading.style.display = 'none';
+                });
+        }
+
+        function changeDiagramType() {
+            let dm = diagramDmTypeSelect.value;
+            let pid = diagramCurrentData.skumain;
+            // Reset layout when DM changes
+            diagramCurrentLayout = 1;
+            renderDiagramNew(pid, dm);
+        }
+
+        function changeDiagramLayout() {
+            let dm = diagramDmTypeSelect.value;
+            let pid = diagramCurrentData.skumain;
+            diagramCurrentLayout = Number(diagramLayoutInput.value);
+            // Re-render only diagram and table
+            renderDiagramImage(pid, dm, diagramCurrentLayout);
+            renderTableSp(pid, dm, diagramCurrentLayout);
+        }
+
+        function checkAvailableLayouts(pid, dm) {
+            let spList = diagramCurrentData?.sp?.[pid]?.[dm] || [];
+            let layouts = new Set();
+            spList.forEach(sp => {
+                if (sp.layout) layouts.add(sp.layout);
+            });
+            return [...layouts].map(Number).sort((a, b) => a - b);
+        }
+
+        function getDiagramImageByLayout(dmInfo, layout) {
+            let key = `img_${layout}`;
+            return dmInfo[key] || dmInfo.img_1 || "https://images.dcpumpkin.com/images/product/500/default.jpg";
+        }
+
+        function renderDiagramImage(pid, dm, layout) {
+            let after = document.getElementById('diagramImageAfter');
+            after.innerHTML = "";
+
+            let dmInfo = diagramCurrentData.dm_list[pid][dm];
+            let layoutImage = getDiagramImageByLayout(dmInfo, layout);
+
+            let img = document.createElement("img");
+            img.src = layoutImage;
+            img.onerror = function () {
+                this.src = "https://images.dcpumpkin.com/images/product/500/default.jpg";
+            };
+            img.style.width = "100%";
+            img.style.objectFit = "contain";
+            after.appendChild(img);
+
+            document.getElementById('diagramImageBefore').style.display = "none";
+            after.style.display = "block";
+        }
+
+        function renderLayoutSelector(pid, dm) {
+            let layouts = checkAvailableLayouts(pid, dm);
+            diagramLayoutInput.innerHTML = "";
+
+            if (layouts.length > 0) {
+                // Determine current layout based on availability
+                if (!layouts.includes(Number(diagramCurrentLayout))) {
+                    diagramCurrentLayout = layouts.includes(1) ? 1 : layouts[0];
+                }
+
+                layouts.forEach(l => {
+                    let opt = document.createElement("option");
+                    opt.value = l;
+                    opt.textContent = `Layout ${l}`;
+                    if (Number(l) === Number(diagramCurrentLayout)) {
+                        opt.selected = true;
+                    }
+                    diagramLayoutInput.appendChild(opt);
+                });
+                layoutWrapper.style.display = "block";
+            } else {
+                layoutWrapper.style.display = "none";
+                diagramCurrentLayout = 1;
+            }
+        }
+
+        function renderTableSp(pid, dm, layout) {
+            let spList = diagramCurrentData?.sp?.[pid]?.[dm] || [];
+            diagramTableBody.innerHTML = "";
+
+            let filtered = spList.filter(sp => Number(sp.layout) === Number(layout));
+            filtered.sort((a, b) => Number(a.tracking_number) - Number(b.tracking_number));
+
+            if (filtered.length === 0) {
+                diagramTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">ไม่พบรายการอะไหล่สำหรับ Layout นี้</td></tr>';
+                return;
+            }
+
+            filtered.forEach(sp => {
+                let row = document.createElement("tr");
+
+                row.onclick = () => {
+                    showDiagramImageModal(`https://images.pumpkin.tools/SKUS/SP/offn/${sp.spcode}.jpg`);
+                };
+
+                row.innerHTML = `
+                    <td style="text-align:center">${sp.tracking_number || '-'}</td>
+                    <td>
+                        <img
+                            src="https://images.pumpkin.tools/SKUS/SP/offn/${sp.spcode}.jpg"
+                            alt="${sp.spname}"
+                            onerror="this.src='https://images.dcpumpkin.com/images/product/500/default.jpg'"
+                        >
+                    </td>
+                    <td>${sp.spcode || '-'}</td>
+                    <td>${sp.spname || '-'}</td>
+                    <td style="text-align:center">1 ${sp.spunit || 'ชิ้น'}</td>
+                    <td>${Number(sp.stdprice).toLocaleString('th-TH', {minimumFractionDigits: 2}) || 'N/A'}</td>
+                `;
+
+                diagramTableBody.appendChild(row);
+            });
+        }
+
+        function renderDiagramNew(pid, dm) {
+            diagramCurrentDM = dm;
+            let dmInfo = diagramCurrentData.dm_list[pid][dm];
+
+            // 1. Update Download URLs
+            diagramDownloadUrl = dmInfo.pdf_path || '';
+            spDownloadUrl = dmInfo.manual_pdf_path || '';
+
+            // 2. Setup Layout Selector
+            renderLayoutSelector(pid, dm);
+
+            // 3. Render Diagram Image (based on current or determined layout)
+            renderDiagramImage(pid, dm, diagramCurrentLayout);
+
+            // 4. Render Parts Table (based on current or determined layout)
+            renderTableSp(pid, dm, diagramCurrentLayout);
+        }
+
+        function showDiagramImageModal(imageSrc) {
+            const modal = document.getElementById("diagramImageModal");
+            const modalImage = document.getElementById("diagramModalImage");
+            modalImage.src = imageSrc;
+            modal.style.display = "flex";
+            // 🆕 Add animation class
+            modal.querySelector('.diagram-modal-content').style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                modal.querySelector('.diagram-modal-content').style.transform = 'scale(1)';
+            }, 50);
+        }
+
+        function closeDiagramModal() {
+            const modal = document.getElementById("diagramImageModal");
+            // 🆕 Simple fade out
+            modal.style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById("diagramImageModal");
+            if (event.target == modal) {
+                closeDiagramModal();
+            }
+        }
+
+        function diagramDownloadDM() {
+            if (diagramDownloadUrl) {
+                window.open(diagramDownloadUrl, '_blank');
+            } else {
+                alert('ไม่พบไฟล์ไดอะแกรม กรุณาค้นหาและเลือกโมเดลสินค้าก่อน');
+            }
+        }
+
+        function diagramDownloadSP() {
+            if (spDownloadUrl) {
+                window.open(spDownloadUrl, '_blank');
+            } else {
+                alert('ไม่พบไฟล์คู่มือใช้งาน กรุณาค้นหาและเลือกโมเดลสินค้าก่อน');
+            }
+        }
+
+        // Initialize table content
+        document.addEventListener('DOMContentLoaded', () => {
+             diagramTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">กรุณาค้นหาสินค้าเพื่อดูรายการอะไหล่</td></tr>';
+        });
+
+    </script>
+</body>
+
+</html>
