@@ -711,14 +711,14 @@
                 let row = document.createElement("tr");
 
                 row.onclick = () => {
-                    showDiagramImageModal(`https://images.pumpkin.tools/SKUS/SP/offn/${sp.spcode}.jpg`);
+                    showDiagramImageModal(`https://warranty-sn.pumpkin.tools/storage/uploads/sp_images/${sp.spcode}.jpg`);
                 };
 
                 row.innerHTML = `
                     <td style="text-align:center">${sp.tracking_number || '-'}</td>
                     <td>
                         <img
-                            src="https://images.pumpkin.tools/SKUS/SP/offn/${sp.spcode}.jpg"
+                            src="https://warranty-sn.pumpkin.tools/storage/uploads/sp_images/${sp.spcode}.jpg"
                             alt="${sp.spname}"
                             onerror="this.src='https://images.dcpumpkin.com/images/product/500/default.jpg'"
                         >
